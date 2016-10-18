@@ -317,49 +317,56 @@ public class KYDrawerController: UIViewController, UIGestureRecognizerDelegate {
     // MARK: - Public Method
     /**************************************************************************/
     
-    public func setDrawerState(state: DrawerState, animated: Bool) {
+    public func setDrawerState(state: DrawerState, animated: Bool, onComplete: (()->())?) {
         _containerView.hidden = false
         let duration: NSTimeInterval = animated ? drawerAnimationDuration : 0
-
+        
         let isAppearing = state == .Opened
         if _isAppearing != isAppearing {
             _isAppearing = isAppearing
             drawerViewController?.beginAppearanceTransition(isAppearing, animated: animated)
             mainViewController?.beginAppearanceTransition(!isAppearing, animated: animated)
         }
-
+        
         UIView.animateWithDuration(duration,
-            delay: 0,
-            options: .CurveEaseOut,
-            animations: { () -> Void in
-                switch state {
-                case .Closed:
-                    self._drawerConstraint.constant     = 0
-                    self._containerView.backgroundColor = UIColor(white: 0, alpha: 0)
-                case .Opened:
-                    let constant: CGFloat
-                    switch self.drawerDirection {
-                    case .Left:
-                        constant = self.drawerWidth
-                    case .Right:
-                        constant = -self.drawerWidth
-                    }
-                    self._drawerConstraint.constant     = constant
-                    self._containerView.backgroundColor = UIColor(
-                        white: 0
-                        , alpha: self.containerViewMaxAlpha
-                    )
-                }
-                self._containerView.layoutIfNeeded()
-            }) { (finished: Bool) -> Void in
-                if state == .Closed {
-                    self._containerView.hidden = true
-                }
-                self.drawerViewController?.endAppearanceTransition()
-                self.mainViewController?.endAppearanceTransition()
-                self._isAppearing = nil
-                self.delegate?.drawerController?(self, stateChanged: state)
+                                   delay: 0,
+                                   options: .CurveEaseOut,
+                                   animations: { () -> Void in
+                                    switch state {
+                                    case .Closed:
+                                        self._drawerConstraint.constant     = 0
+                                        self._containerView.backgroundColor = UIColor(white: 0, alpha: 0)
+                                    case .Opened:
+                                        let constant: CGFloat
+                                        switch self.drawerDirection {
+                                        case .Left:
+                                            constant = self.drawerWidth
+                                        case .Right:
+                                            constant = -self.drawerWidth
+                                        }
+                                        self._drawerConstraint.constant     = constant
+                                        self._containerView.backgroundColor = UIColor(
+                                            white: 0
+                                            , alpha: self.containerViewMaxAlpha
+                                        )
+                                    }
+                                    self._containerView.layoutIfNeeded()
+        }) { (finished: Bool) -> Void in
+            if state == .Closed {
+                self._containerView.hidden = true
+            }
+            self.drawerViewController?.endAppearanceTransition()
+            self.mainViewController?.endAppearanceTransition()
+            self._isAppearing = nil
+            self.delegate?.drawerController?(self, stateChanged: state)
+            if let completer = onComplete {
+                completer()
+            }
         }
+    }
+    
+    public func setDrawerState(state: DrawerState, animated: Bool) {
+        self.setDrawerState(state, animated: animated, onComplete: nil)
     }
     
     /**************************************************************************/

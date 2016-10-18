@@ -324,49 +324,56 @@ open class KYDrawerController: UIViewController, UIGestureRecognizerDelegate {
     // MARK: - Public Method
     /**************************************************************************/
     
-    public func setDrawerState(_ state: DrawerState, animated: Bool) {
+    public func setDrawerState(_ state: DrawerState, animated: Bool, onComplete: (()->())?) {
         _containerView.isHidden = false
         let duration: TimeInterval = animated ? drawerAnimationDuration : 0
-
+        
         let isAppearing = state == .opened
         if _isAppearing != isAppearing {
             _isAppearing = isAppearing
             drawerViewController?.beginAppearanceTransition(isAppearing, animated: animated)
             mainViewController?.beginAppearanceTransition(!isAppearing, animated: animated)
         }
-
+        
         UIView.animate(withDuration: duration,
-            delay: 0,
-            options: .curveEaseOut,
-            animations: { () -> Void in
-                switch state {
-                case .closed:
-                    self._drawerConstraint.constant     = 0
-                    self._containerView.backgroundColor = UIColor(white: 0, alpha: 0)
-                case .opened:
-                    let constant: CGFloat
-                    switch self.drawerDirection {
-                    case .left:
-                        constant = self.drawerWidth
-                    case .right:
-                        constant = -self.drawerWidth
-                    }
-                    self._drawerConstraint.constant     = constant
-                    self._containerView.backgroundColor = UIColor(
-                        white: 0
-                        , alpha: self.containerViewMaxAlpha
-                    )
-                }
-                self._containerView.layoutIfNeeded()
-            }) { (finished: Bool) -> Void in
-                if state == .closed {
-                    self._containerView.isHidden = true
-                }
-                self.drawerViewController?.endAppearanceTransition()
-                self.mainViewController?.endAppearanceTransition()
-                self._isAppearing = nil
-                self.delegate?.drawerController?(self, stateChanged: state)
+                       delay: 0,
+                       options: .curveEaseOut,
+                       animations: { () -> Void in
+                        switch state {
+                        case .closed:
+                            self._drawerConstraint.constant     = 0
+                            self._containerView.backgroundColor = UIColor(white: 0, alpha: 0)
+                        case .opened:
+                            let constant: CGFloat
+                            switch self.drawerDirection {
+                            case .left:
+                                constant = self.drawerWidth
+                            case .right:
+                                constant = -self.drawerWidth
+                            }
+                            self._drawerConstraint.constant     = constant
+                            self._containerView.backgroundColor = UIColor(
+                                white: 0
+                                , alpha: self.containerViewMaxAlpha
+                            )
+                        }
+                        self._containerView.layoutIfNeeded()
+        }) { (finished: Bool) -> Void in
+            if state == .closed {
+                self._containerView.isHidden = true
+            }
+            self.drawerViewController?.endAppearanceTransition()
+            self.mainViewController?.endAppearanceTransition()
+            self._isAppearing = nil
+            self.delegate?.drawerController?(self, stateChanged: state)
+            if let onCompleter = onComplete {
+                onCompleter()
+            }
         }
+    }
+    
+    public func setDrawerState(_ state: DrawerState, animated: Bool) {
+        self.setDrawerState(state, animated: animated, onComplete: nil)
     }
     
     /**************************************************************************/
